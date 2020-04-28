@@ -29,20 +29,26 @@ defmodule TcpServer do
   end
 
   defp serve(socket) do
-    socket
-    |> read_line()
-    |> write_line(socket)
+    msg =
+      case read_line(socket) do
+        {:ok, msg} ->
+          String.trim_trailing(msg)
 
+        {:error, :closed} ->
+          Logger.info("client left!")
+          exit(:shutdown)
+      end
+
+    IO.inspect(msg, label: "msg")
+    write_line(socket, msg)
     serve(socket)
   end
 
   defp read_line(socket) do
-    {:ok, data} = :gen_tcp.recv(socket, 0)
-
-    data
+    :gen_tcp.recv(socket, 0)
   end
 
-  defp write_line(line, socket) do
+  defp write_line(socket, line) do
     :gen_tcp.send(socket, line)
   end
 end
