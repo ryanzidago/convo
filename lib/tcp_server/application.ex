@@ -12,18 +12,12 @@ defmodule TcpServer.Application do
 
       # starting a Task.Supervisor process with the name TcpServer.TaskSupervisor
       {Task.Supervisor, name: TcpServer.TaskSupervisor},
-      {TcpServer, port_config()},
+      {TcpServer, 9000},
       {TcpClientPool, []}
     ]
 
     # starting a Supervisor process with the name TcpServer.Supervisor
     opts = [strategy: :one_for_one, name: TcpServer.Supervisor]
     Supervisor.start_link(children, opts)
-  end
-
-  defp port_config do
-    _port =
-      (System.get_env("PORT") || "9000")
-      |> String.to_integer()
   end
 end
