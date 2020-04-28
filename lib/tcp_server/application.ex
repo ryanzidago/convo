@@ -6,8 +6,6 @@ defmodule TcpServer.Application do
   use Application
 
   def start(_type, _args) do
-    :observer.start()
-
     children = [
       # Starts a worker by calling: TcpServer.Worker.start_link(arg)
       # {TcpServer.Worker, arg}
