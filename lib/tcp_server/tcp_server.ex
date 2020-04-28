@@ -22,6 +22,8 @@ defmodule TcpServer do
 
     Logger.info("client #{inspect(client)} from socket #{inspect(socket)} connected to TcpServer")
 
+    TcpClientPool.add_client(client)
+
     {:ok, pid} = Task.Supervisor.start_child(TcpServer.TaskSupervisor, fn -> serve(client) end)
 
     :ok = :gen_tcp.controlling_process(client, pid)
@@ -37,6 +39,9 @@ defmodule TcpServer do
 
         {:error, :closed} ->
           Logger.info("client left!")
+
+          TcpClientPool.delete_client(socket)
+
           exit(:shutdown)
       end
 
@@ -45,7 +50,9 @@ defmodule TcpServer do
       label: "received msg from client #{inspect(socket)} running in pid #{inspect(self())}"
     )
 
-    write_line(socket, msg)
+    TcpClientPool.get_all_clients()
+    |> Enum.each(&write_line(&1, msg))
+
     serve(socket)
   end
 

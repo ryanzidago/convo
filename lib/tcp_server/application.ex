@@ -14,7 +14,8 @@ defmodule TcpServer.Application do
 
       # starting a Task.Supervisor process with the name TcpServer.TaskSupervisor
       {Task.Supervisor, name: TcpServer.TaskSupervisor},
-      {TcpServer, port_config()}
+      {TcpServer, port_config()},
+      {TcpClientPool, []}
     ]
 
     # starting a Supervisor process with the name TcpServer.Supervisor
