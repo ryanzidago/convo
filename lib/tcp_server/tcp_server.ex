@@ -50,7 +50,10 @@ defmodule TcpServer do
       label: "received msg from client #{inspect(socket)} running in pid #{inspect(self())}"
     )
 
+    author = socket
+
     TcpClientPool.get_all_clients()
+    |> Stream.reject(&(&1 == author))
     |> Enum.each(&write_line(&1, msg))
 
     serve(socket)
