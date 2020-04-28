@@ -6,14 +6,18 @@ defmodule TcpServer.Application do
   use Application
 
   def start(_type, _args) do
+    # :observer.start()
+
     children = [
       # Starts a worker by calling: TcpServer.Worker.start_link(arg)
       # {TcpServer.Worker, arg}
+
+      # starting a Task.Supervisor process with the name TcpServer.TaskSupervisor
+      {Task.Supervisor, name: TcpServer.TaskSupervisor},
       {Task, fn -> TcpServer.accept(port_config()) end}
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
+    # starting a Supervisor process with the name TcpServer.Supervisor
     opts = [strategy: :one_for_one, name: TcpServer.Supervisor]
     Supervisor.start_link(children, opts)
   end

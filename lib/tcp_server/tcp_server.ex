@@ -1,6 +1,12 @@
 defmodule TcpServer do
   require Logger
 
+  def start_link(port) do
+    Logger.info("Starting TcpServer ...")
+
+    Task.start_link(__MODULE__, :accept, [port])
+  end
+
   def accept(port) do
     {:ok, socket} =
       :gen_tcp.listen(port, [:binary, packet: :line, active: false, reuseaddr: true])
@@ -13,7 +19,11 @@ defmodule TcpServer do
   defp loop_acceptor(socket) do
     {:ok, client} = :gen_tcp.accept(socket)
 
-    serve(client)
+    Logger.info("client #{inspect(client)} from socket #{inspect(socket)} connected to TcpServer")
+
+    {:ok, pid} = Task.Supervisor.start_child(TcpServer.TaskSupervisor, fn -> serve(client) end)
+
+    :ok = :gen_tcp.controlling_process(client, pid)
 
     loop_acceptor(socket)
   end
