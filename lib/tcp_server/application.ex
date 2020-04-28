@@ -6,7 +6,7 @@ defmodule TcpServer.Application do
   use Application
 
   def start(_type, _args) do
-    # :observer.start()
+    :observer.start()
 
     children = [
       # Starts a worker by calling: TcpServer.Worker.start_link(arg)
@@ -14,7 +14,7 @@ defmodule TcpServer.Application do
 
       # starting a Task.Supervisor process with the name TcpServer.TaskSupervisor
       {Task.Supervisor, name: TcpServer.TaskSupervisor},
-      {Task, fn -> TcpServer.accept(port_config()) end}
+      {TcpServer, port_config()}
     ]
 
     # starting a Supervisor process with the name TcpServer.Supervisor

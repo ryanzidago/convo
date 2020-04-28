@@ -1,4 +1,5 @@
 defmodule TcpServer do
+  use Task
   require Logger
 
   def start_link(port) do
@@ -32,14 +33,18 @@ defmodule TcpServer do
     msg =
       case read_line(socket) do
         {:ok, msg} ->
-          String.trim_trailing(msg)
+          msg
 
         {:error, :closed} ->
           Logger.info("client left!")
           exit(:shutdown)
       end
 
-    IO.inspect(msg, label: "msg")
+    String.trim_trailing(msg)
+    |> IO.inspect(
+      label: "received msg from client #{inspect(socket)} running in pid #{inspect(self())}"
+    )
+
     write_line(socket, msg)
     serve(socket)
   end
