@@ -5,6 +5,10 @@ defmodule TcpServer.Application do
 
   use Application
 
+  def main(_args) do
+    System.cmd("mix", ["run", "--no-halt"])
+  end
+
   def start(_type, _args) do
     children = [
       # Starts a worker by calling: TcpServer.Worker.start_link(arg)
