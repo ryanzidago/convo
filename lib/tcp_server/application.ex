@@ -12,7 +12,7 @@ defmodule TcpServer.Application do
 
       # starting a Task.Supervisor process with the name TcpServer.TaskSupervisor
       {Task.Supervisor, name: TcpServer.TaskSupervisor},
-      {TcpServer, 9000},
+      {TcpServer, [9000, {127, 0, 0, 1}]},
       {TcpClientPool, []}
     ]
 
