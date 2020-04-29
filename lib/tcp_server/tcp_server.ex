@@ -2,20 +2,19 @@ defmodule TcpServer do
   use Task
   require Logger
 
-  def start_link([port, ip]) do
+  def start_link(port) do
     Logger.info("Starting TcpServer ...")
 
-    Task.start_link(__MODULE__, :accept, [[port, ip]])
+    Task.start_link(__MODULE__, :accept, [port])
   end
 
-  def accept([port, ip]) do
+  def accept(port) do
     {:ok, socket} =
       :gen_tcp.listen(port, [
         :binary,
         packet: :line,
         active: false,
-        reuseaddr: true,
-        ip: ip
+        reuseaddr: true
       ])
 
     Logger.info("Accepting connections on port #{port}")
