@@ -25,7 +25,7 @@ defmodule TcpServer do
   defp loop_acceptor(socket) do
     {:ok, client} = :gen_tcp.accept(socket)
 
-    Logger.info("client #{inspect(client)} from socket #{inspect(socket)} connected to TcpServer")
+    Logger.info("Client #{inspect(client)} from socket #{inspect(socket)} connected to TcpServer")
 
     TcpClientPool.add_client(client)
 
@@ -43,17 +43,14 @@ defmodule TcpServer do
           msg
 
         {:error, :closed} ->
-          Logger.info("client left!")
+          Logger.info("Client left!")
 
           TcpClientPool.delete_client(socket)
 
           exit(:shutdown)
       end
 
-    String.trim_trailing(msg)
-    |> IO.inspect(
-      label: "received msg from client #{inspect(socket)} running in pid #{inspect(self())}"
-    )
+    display_message(msg, socket)
 
     author = socket
 
@@ -70,5 +67,14 @@ defmodule TcpServer do
 
   defp write_line(socket, line) do
     :gen_tcp.send(socket, line)
+  end
+
+  defp display_message("\n", _socket), do: nil
+  defp display_message("\r\n", _socket), do: nil
+
+  defp display_message(msg, socket) do
+    Logger.info(
+      "Received message from client #{inspect(socket)} running in pid #{inspect(self())}: #{msg}"
+    )
   end
 end

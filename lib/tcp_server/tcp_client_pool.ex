@@ -4,14 +4,14 @@ defmodule TcpClientPool do
   require Logger
 
   def start_link(_) do
-    Logger.info("starting TcpClientPool ...")
+    Logger.info("Starting TcpClientPool ...")
 
     Agent.start_link(fn -> [] end, name: __MODULE__)
   end
 
   def add_client(client) do
     Logger.info(
-      "adding client #{inspect(client)} to client pool running in pid #{inspect(self())}"
+      "Adding client #{inspect(client)} to client pool running in pid #{inspect(self())}"
     )
 
     Agent.update(__MODULE__, fn clients -> [client | clients] end)
@@ -23,7 +23,7 @@ defmodule TcpClientPool do
 
   def delete_client(client) do
     Logger.info(
-      "deleting client #{inspect(client)} from client pool running in pid #{inspect(self())}"
+      "Deleting client #{inspect(client)} from client pool running in pid #{inspect(self())}"
     )
 
     Agent.update(__MODULE__, fn clients ->
