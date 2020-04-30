@@ -9,7 +9,7 @@ defmodule TcpServer do
   end
 
   def accept(port) do
-    {:ok, socket} =
+    {:ok, listen_socket} =
       :gen_tcp.listen(port, [
         :binary,
         packet: :line,
@@ -18,19 +18,21 @@ defmodule TcpServer do
       ])
 
     Logger.info("Accepting connections on port #{port}")
-    loop_acceptor(socket)
+    loop_acceptor(listen_socket)
   end
 
-  defp loop_acceptor(socket) do
-    {:ok, client} = :gen_tcp.accept(socket)
+  defp loop_acceptor(listen_socket) do
+    {:ok, client} = :gen_tcp.accept(listen_socket)
 
-    Logger.info("Client #{inspect(client)} from socket #{inspect(socket)} connected to TcpServer")
+    Logger.info(
+      "Client #{inspect(client)} from listen_socket #{inspect(listen_socket)} connected to TcpServer"
+    )
 
     TcpClientPool.add_client(client)
 
     {:ok, pid} = Task.Supervisor.start_child(TcpServer.TaskSupervisor, fn -> serve(client) end)
     :ok = :gen_tcp.controlling_process(client, pid)
-    loop_acceptor(socket)
+    loop_acceptor(listen_socket)
   end
 
   defp serve(socket) do
