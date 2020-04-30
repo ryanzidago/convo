@@ -4,7 +4,7 @@ defmodule TcpClientPool do
   require Logger
 
   def start_link(_) do
-    Logger.info("Starting TcpClientPool ...")
+    Logger.info("Starting TcpClientPool running in pid #{inspect(self())} ...")
 
     Agent.start_link(fn -> [] end, name: __MODULE__)
   end

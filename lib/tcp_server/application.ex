@@ -10,10 +10,9 @@ defmodule TcpServer.Application do
       # Starts a worker by calling: TcpServer.Worker.start_link(arg)
       # {TcpServer.Worker, arg}
 
-      # starting a Task.Supervisor process with the name TcpServer.TaskSupervisor
-      {Task.Supervisor, name: TcpServer.TaskSupervisor},
-      {TcpServer, 5000},
-      {TcpClientPool, []}
+      {DynamicSupervisor, strategy: :one_for_one, name: TcpServer.DynamicSupervisor},
+      {TcpClientPool, []},
+      {TcpServer, 5000}
     ]
 
     # starting a Supervisor process with the name TcpServer.Supervisor
