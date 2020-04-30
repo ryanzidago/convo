@@ -18,7 +18,6 @@ defmodule TcpServer do
       ])
 
     Logger.info("Accepting connections on port #{port}")
-
     loop_acceptor(socket)
   end
 
@@ -30,9 +29,7 @@ defmodule TcpServer do
     TcpClientPool.add_client(client)
 
     {:ok, pid} = Task.Supervisor.start_child(TcpServer.TaskSupervisor, fn -> serve(client) end)
-
     :ok = :gen_tcp.controlling_process(client, pid)
-
     loop_acceptor(socket)
   end
 
@@ -53,10 +50,7 @@ defmodule TcpServer do
     display_message(msg, socket)
 
     author = socket
-
-    TcpClientPool.get_all_clients()
-    |> Stream.reject(&(&1 == author))
-    |> Enum.each(&write_line(&1, msg))
+    broadcast_to_all_clients_except_author(author, msg)
 
     serve(socket)
   end
@@ -67,6 +61,12 @@ defmodule TcpServer do
 
   defp write_line(socket, line) do
     :gen_tcp.send(socket, line)
+  end
+
+  defp broadcast_to_all_clients_except_author(author, msg) do
+    TcpClientPool.get_all_clients()
+    |> Stream.reject(&(&1 == author))
+    |> Enum.each(&write_line(&1, msg))
   end
 
   defp display_message("\n", _socket), do: nil
