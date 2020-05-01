@@ -4,7 +4,7 @@ defmodule TcpClient do
   require Logger
 
   def start_link(socket) do
-    Logger.info("Starting TcpClient running on pid #{inspect(self())}")
+    Logger.info("Starting TcpClient ...")
 
     TcpClientPool.add_client(socket)
 
@@ -14,14 +14,15 @@ defmodule TcpClient do
   def init(socket) do
     username = set_username(socket)
 
-    {:ok, %{socket: socket, username: username}}
+    {:ok, %{username: username}}
   end
 
-  def handle_info({:tcp, socket, data}, %{username: username} = state) do
-    Logger.info("incoming packet: #{inspect(data)}")
-    display_prompt(socket, username)
-    broadcast_to_all_clients_except_author(socket, data)
+  def handle_info({:tcp, socket, message}, %{username: username} = state) do
+    message = String.trim(message)
 
+    Logger.info("Incoming packet: #{inspect(message)}")
+
+    broadcast_to_all_clients_except_author(socket, message, state)
     {:noreply, state}
   end
 
@@ -36,17 +37,19 @@ defmodule TcpClient do
     {:ok, username} = :gen_tcp.recv(socket, 0)
     :inet.setopts(socket, active: true)
 
-    username
+    String.trim(username)
   end
 
   defp display_prompt(socket, username) do
-    :gen_tcp.send(socket, "#{String.trim(username)}: ")
+    :gen_tcp.send(socket, "\n#{username} : ")
   end
 
-  defp broadcast_to_all_clients_except_author(author, data) do
+  defp broadcast_to_all_clients_except_author(author, message, %{username: username} = _state) do
+    message = "#{username} : #{message}\n"
+
     TcpClientPool.get_all_clients()
     |> Stream.reject(&(&1 == author))
-    |> Enum.each(&broadcast(&1, data))
+    |> Enum.each(&broadcast(&1, message))
   end
 
   defp broadcast(socket, line) do

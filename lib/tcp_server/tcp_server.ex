@@ -29,8 +29,8 @@ defmodule TcpServer do
     )
 
     {:ok, pid} = DynamicSupervisor.start_child(TcpServer.DynamicSupervisor, {TcpClient, client})
-
     :ok = :gen_tcp.controlling_process(client, pid)
+
     loop_acceptor(listen_socket)
   end
 end
