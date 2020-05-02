@@ -1,5 +1,5 @@
 defmodule TcpServer do
-  use Task
+  use Task, restart: :permanent
   require Logger
 
   def start_link(port) do
@@ -9,6 +9,8 @@ defmodule TcpServer do
   end
 
   def accept(port) do
+    Process.register(self(), TcpServer)
+
     {:ok, listen_socket} =
       :gen_tcp.listen(port, [
         :binary,

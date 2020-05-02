@@ -3,6 +3,8 @@ defmodule TcpClient do
 
   require Logger
 
+  ### Maybe use ETS tables for shared state?
+
   def start_link(socket) do
     Logger.info("Starting TcpClient ...")
 
