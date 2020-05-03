@@ -50,6 +50,7 @@ defmodule TcpClient do
       "> display-commands" -> display_commands(socket, state)
       "> change-username " <> new_username -> change_username(socket, new_username, state)
       "> show-stats" -> show_connection_stats(socket, state)
+      "> leave" -> leave(socket, state)
       "" -> state
       _ -> broadcast_to_others(socket, message, state)
     end
@@ -68,6 +69,9 @@ defmodule TcpClient do
 
     > show-stats
       # display activity statistics like number of persons connected or time since last login.
+
+    > leave
+      # leave the chat and returns to the command line.
     """
 
     broadcast(socket, message)
@@ -107,6 +111,14 @@ defmodule TcpClient do
 
     broadcast(socket, message)
 
+    state
+  end
+
+  defp leave(socket, %{username: username} = state) do
+    broadcast(socket, "See you next time #{username}!")
+
+    send(self(), {:tcp_closed, socket})
+    Process.exit(self(), :kill)
     state
   end
 
