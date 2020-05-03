@@ -15,12 +15,8 @@ defmodule TcpClient do
     {:ok, %{username: set_username(socket)}}
   end
 
-  def handle_info({:tcp, _socket, "> change-username: " <> new_username}, state) do
-    {:noreply, %{state | username: String.trim(new_username)}}
-  end
-
-  def handle_info({:tcp, socket, message}, %{username: username} = state) do
-    broadcast_to_others(socket, String.trim(message), username)
+  def handle_info({:tcp, socket, message}, state) do
+    state = process_message(socket, message, state)
     {:noreply, state}
   end
 
@@ -28,6 +24,29 @@ defmodule TcpClient do
     TcpClientPool.delete_client(socket)
 
     {:noreply, state}
+  end
+
+  defp process_message(socket, message, state) do
+    message = String.trim(message)
+
+    case message do
+      "> change-username " <> new_username -> change_username(socket, new_username, state)
+      "" -> state
+      _ -> broadcast_to_others(socket, message, state)
+    end
+  end
+
+  defp change_username(socket, new_username, state) do
+    broadcast(socket, "> Your username has been changed to #{new_username}!")
+
+    broadcast_to_others(
+      socket,
+      "> #{state.username} has changed his/her username to #{new_username}!",
+      state,
+      prompt: false
+    )
+
+    %{state | username: new_username}
   end
 
   defp set_username(socket) do
@@ -39,14 +58,27 @@ defmodule TcpClient do
     String.trim(username)
   end
 
-  defp broadcast_to_others(current_client, message, username) do
+  defp broadcast_to_others(
+         current_client,
+         message,
+         %{username: username} = state,
+         opts \\ [prompt: true]
+       ) do
+    message =
+      case Keyword.get(opts, :prompt) do
+        true -> prompt(username) <> message
+        false -> message
+      end
+
     TcpClientPool.get_all_clients()
     |> Stream.reject(&(&1 == current_client))
-    |> Enum.each(&broadcast(&1, prompt(username) <> message <> "\n"))
+    |> Enum.each(&broadcast(&1, message))
+
+    state
   end
 
   def broadcast(client, message) do
-    :gen_tcp.send(client, message)
+    :gen_tcp.send(client, message <> "\n")
   end
 
   defp prompt(username) do
