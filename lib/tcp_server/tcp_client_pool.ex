@@ -1,4 +1,10 @@
 defmodule TcpClientPool do
+  @doc """
+  This is the TcpClientPool, an Agent whose sole responsibiliy is to add/deletes clients to the pool of clients.
+  If the TcpClientPool dies, it is automatically restarted.
+
+  This pool of clients is mostly used to broadcast messages to all of the current connected clients.
+  """
   use Agent
 
   require Logger

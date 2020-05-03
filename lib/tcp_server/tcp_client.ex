@@ -1,4 +1,10 @@
 defmodule TcpClient do
+  @doc """
+  This is the TcpClient, a GenServer whose name is registered under TcpClient.
+  If the TcpClient dies, it is not restarted, as there is no use to restart a connection that has been left.
+
+  It's main responsibiliy is to handle interactions with TCP clients, accept and executes commands from the client.
+  """
   use GenServer, restart: :temporary
 
   require Logger

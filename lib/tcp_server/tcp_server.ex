@@ -1,4 +1,10 @@
 defmodule TcpServer do
+  @doc """
+  The TCP server is a task named TcpServer. If the TCP server dies, it is automatically restarted.
+
+  It's main responsibiliy is to listen a socket on port 5000 and accept clients connections.
+  """
+
   use Task, restart: :permanent
   require Logger
 
