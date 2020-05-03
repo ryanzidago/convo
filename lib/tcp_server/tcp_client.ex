@@ -12,7 +12,7 @@ defmodule TcpClient do
   end
 
   def init(socket) do
-    {:ok, %{username: set_username(socket)}}
+    {:ok, %{username: set_username(socket), connected_since: current_date_time()}}
   end
 
   def handle_info({:tcp, socket, message}, state) do
@@ -31,6 +31,7 @@ defmodule TcpClient do
 
     case message do
       "> change-username " <> new_username -> change_username(socket, new_username, state)
+      "> show-connection-stats" -> show_connection_stats(socket, state)
       "" -> state
       _ -> broadcast_to_others(socket, message, state)
     end
@@ -47,6 +48,27 @@ defmodule TcpClient do
     )
 
     %{state | username: new_username}
+  end
+
+  defp show_connection_stats(socket, state) do
+    number_of_connected_clients =
+      TcpClientPool.get_all_clients()
+      |> length()
+
+    person = if number_of_connected_clients == 1, do: "person", else: "persons"
+
+    message = """
+
+    > Numbers of #{person} currently connected: #{number_of_connected_clients}.
+    > Last login: #{state.connected_since}.
+    > Time spent since last login (in minutes): #{
+      DateTime.diff(current_date_time(), state.connected_since) |> div(60)
+    }
+    """
+
+    broadcast(socket, message)
+
+    state
   end
 
   defp set_username(socket) do
@@ -83,5 +105,10 @@ defmodule TcpClient do
 
   defp prompt(username) do
     "\r#{username} : "
+  end
+
+  defp current_date_time do
+    DateTime.utc_now()
+    |> DateTime.add(60 * 120, :second)
   end
 end
