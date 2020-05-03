@@ -14,16 +14,25 @@ defmodule TcpClient do
   def init(socket) do
     username = set_username(socket)
 
-    state = %{username: username, connected_since: current_date_time()}
+    state = %{
+      username: username,
+      connected_since: current_date_time(),
+      number_of_messages_sent: 0,
+      number_of_messages_receveived: 0
+    }
+
     broadcast(socket, ~s(Type: "> display-commands" to display a list of all available commands.))
     broadcast_to_others(socket, "> #{username} has joined the chat!", state, prompt: false)
 
     {:ok, state}
   end
 
-  def handle_info({:tcp, socket, message}, state) do
+  def handle_info(
+        {:tcp, socket, message},
+        %{number_of_messages_receveived: number_of_messages_receveived} = state
+      ) do
     state = process_message(socket, message, state)
-    {:noreply, state}
+    {:noreply, %{state | number_of_messages_receveived: number_of_messages_receveived + 1}}
   end
 
   def handle_info({:tcp_closed, socket}, %{username: username} = state) do
@@ -40,7 +49,7 @@ defmodule TcpClient do
     case message do
       "> display-commands" -> display_commands(socket, state)
       "> change-username " <> new_username -> change_username(socket, new_username, state)
-      "> show-connection-stats" -> show_connection_stats(socket, state)
+      "> show-stats" -> show_connection_stats(socket, state)
       "" -> state
       _ -> broadcast_to_others(socket, message, state)
     end
@@ -57,8 +66,8 @@ defmodule TcpClient do
     > change-username <new-username>
       # allows you to change your username; type e.g.: "> change-username bertrand" to change your username to "betrand"
 
-    > show-connection-stats
-      # display connection statistics like number of persons connected or time since last login.
+    > show-stats
+      # display activity statistics like number of persons connected or time since last login.
     """
 
     broadcast(socket, message)
@@ -88,11 +97,12 @@ defmodule TcpClient do
 
     message = """
 
-    > Numbers of #{person} currently connected: #{number_of_connected_clients}.
-    > Last login: #{state.connected_since}.
+    > Numbers of #{person} currently connected: #{number_of_connected_clients}
+    > Last login: #{state.connected_since}
     > Time spent since last login (in minutes): #{
       DateTime.diff(current_date_time(), state.connected_since) |> div(60)
     }
+    > Messages sent: #{state.number_of_messages_sent}
     """
 
     broadcast(socket, message)
@@ -111,7 +121,7 @@ defmodule TcpClient do
   defp broadcast_to_others(
          current_client,
          message,
-         %{username: username} = state,
+         %{username: username, number_of_messages_sent: number_of_messages_sent} = state,
          opts \\ [prompt: true]
        ) do
     message =
@@ -124,7 +134,7 @@ defmodule TcpClient do
     |> Stream.reject(&(&1 == current_client))
     |> Enum.each(&broadcast(&1, message))
 
-    state
+    %{state | number_of_messages_sent: number_of_messages_sent + 1}
   end
 
   def broadcast(client, message) do
