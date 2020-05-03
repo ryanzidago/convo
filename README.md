@@ -10,6 +10,8 @@ or
 nc localhost 5000
 ```
 
+The server handles simultaneous connections (try to connect to the server with more than one client), and some basic user interactions.
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
