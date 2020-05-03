@@ -3,8 +3,6 @@ defmodule TcpClient do
 
   require Logger
 
-  ### Maybe use ETS tables for shared state?
-
   def start_link(socket) do
     Logger.info("Starting TcpClient ...")
 
@@ -14,37 +12,15 @@ defmodule TcpClient do
   end
 
   def init(socket) do
-    username = set_username(socket)
-
-    state = %{username: username}
-
-    message = "#{username} has joined the chat!\n"
-    broadcast_info_message_to_others(socket, message)
-
-    {:ok, state}
+    {:ok, %{username: set_username(socket)}}
   end
 
-  def handle_info(
-        {:tcp, socket, "> change-username: " <> new_username},
-        %{username: username} = state
-      ) do
-    new_username = String.trim(new_username)
-
-    broadcast_info_message_to_self(
-      socket,
-      "Your username has been changed from #{username} to #{new_username}\n"
-    )
-
-    message = "#{username} has changed his/her username to #{new_username}!"
-    broadcast_info_message_to_others(socket, message)
-
-    {:noreply, %{state | username: new_username}}
+  def handle_info({:tcp, _socket, "> change-username: " <> new_username}, state) do
+    {:noreply, %{state | username: String.trim(new_username)}}
   end
 
-  def handle_info({:tcp, socket, message}, state) do
-    message = String.trim(message)
-    broadcast_to_others(socket, message, state)
-
+  def handle_info({:tcp, socket, message}, %{username: username} = state) do
+    broadcast_to_others(socket, String.trim(message), username)
     {:noreply, state}
   end
 
@@ -55,7 +31,7 @@ defmodule TcpClient do
   end
 
   defp set_username(socket) do
-    broadcast_info_message_to_self(socket, "Please, provide a username: ")
+    :gen_tcp.send(socket, "Please, provide a username: ")
 
     {:ok, username} = :gen_tcp.recv(socket, 0)
     :inet.setopts(socket, active: true)
@@ -63,23 +39,17 @@ defmodule TcpClient do
     String.trim(username)
   end
 
-  defp broadcast_info_message_to_self(author, message) do
-    :gen_tcp.send(author, message)
-  end
-
-  defp broadcast_info_message_to_others(author, message) do
-    broadcast(author, message)
-  end
-
-  defp broadcast_to_others(author, message, %{username: username} = _state) do
-    message = "#{username} : #{message}\n"
-
-    broadcast(author, message)
-  end
-
-  defp broadcast(author, message) do
+  defp broadcast_to_others(current_client, message, username) do
     TcpClientPool.get_all_clients()
-    |> Stream.reject(&(&1 == author))
-    |> Enum.each(&:gen_tcp.send(&1, message))
+    |> Stream.reject(&(&1 == current_client))
+    |> Enum.each(&broadcast(&1, prompt(username) <> message <> "\n"))
+  end
+
+  def broadcast(client, message) do
+    :gen_tcp.send(client, message)
+  end
+
+  defp prompt(username) do
+    "\r#{username} : "
   end
 end
