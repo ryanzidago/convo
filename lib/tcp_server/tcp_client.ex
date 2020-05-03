@@ -49,7 +49,7 @@ defmodule TcpClient do
     case message do
       "> display-commands" -> display_commands(socket, state)
       "> change-username " <> new_username -> change_username(socket, new_username, state)
-      "> show-stats" -> show_connection_stats(socket, state)
+      "> show-stats" -> show_stats(socket, state)
       "> leave" -> leave(socket, state)
       "" -> state
       _ -> broadcast_to_others(socket, message, state)
@@ -92,7 +92,7 @@ defmodule TcpClient do
     %{state | username: new_username}
   end
 
-  defp show_connection_stats(socket, state) do
+  defp show_stats(socket, state) do
     number_of_connected_clients =
       TcpClientPool.get_all_clients()
       |> length()
