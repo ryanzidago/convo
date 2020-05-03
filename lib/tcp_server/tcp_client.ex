@@ -12,7 +12,10 @@ defmodule TcpClient do
   end
 
   def init(socket) do
-    {:ok, %{username: set_username(socket), connected_since: current_date_time()}}
+    username = set_username(socket)
+    broadcast(socket, ~s(Type: "> display-commands" to display a list of all available commands.))
+
+    {:ok, %{username: username, connected_since: current_date_time()}}
   end
 
   def handle_info({:tcp, socket, message}, state) do
@@ -30,11 +33,32 @@ defmodule TcpClient do
     message = String.trim(message)
 
     case message do
+      "> display-commands" -> display_commands(socket, state)
       "> change-username " <> new_username -> change_username(socket, new_username, state)
       "> show-connection-stats" -> show_connection_stats(socket, state)
       "" -> state
       _ -> broadcast_to_others(socket, message, state)
     end
+  end
+
+  defp display_commands(socket, state) do
+    message = """
+
+    Here is a list of all the commands that you can execute:
+
+    > display-commands
+      # display a list of all commands.
+
+    > change-username <new-username>
+      # allows you to change your username; type e.g.: "> change-username bertrand" to change your username to "betrand"
+
+    > show-connection-stats
+      # display connection statistics like number of persons connected or time since last login.
+    """
+
+    broadcast(socket, message)
+
+    state
   end
 
   defp change_username(socket, new_username, state) do
@@ -73,7 +97,6 @@ defmodule TcpClient do
 
   defp set_username(socket) do
     :gen_tcp.send(socket, "Please, provide a username: ")
-
     {:ok, username} = :gen_tcp.recv(socket, 0)
     :inet.setopts(socket, active: true)
 
