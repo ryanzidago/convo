@@ -13,9 +13,12 @@ defmodule TcpClient do
 
   def init(socket) do
     username = set_username(socket)
-    broadcast(socket, ~s(Type: "> display-commands" to display a list of all available commands.))
 
-    {:ok, %{username: username, connected_since: current_date_time()}}
+    state = %{username: username, connected_since: current_date_time()}
+    broadcast(socket, ~s(Type: "> display-commands" to display a list of all available commands.))
+    broadcast_to_others(socket, "> #{username} has joined the chat!", state, prompt: false)
+
+    {:ok, state}
   end
 
   def handle_info({:tcp, socket, message}, state) do
@@ -23,8 +26,10 @@ defmodule TcpClient do
     {:noreply, state}
   end
 
-  def handle_info({:tcp_closed, socket}, state) do
+  def handle_info({:tcp_closed, socket}, %{username: username} = state) do
     TcpClientPool.delete_client(socket)
+
+    broadcast_to_others(socket, "> #{username} has left the chat!", state, prompt: false)
 
     {:noreply, state}
   end
