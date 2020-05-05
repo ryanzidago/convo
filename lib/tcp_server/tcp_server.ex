@@ -3,6 +3,8 @@ defmodule TcpServer do
   The TCP server is a task named TcpServer. If the TCP server dies, it is automatically restarted.
 
   It's main responsibiliy is to listen a socket on port 5000 and accept clients connections.
+  For each one of those client connections, the DynamicSupervisor TcpServer.DynamicSupervisor
+  passes the socket representing the client connection to the TcpClient GenServer.
   """
 
   use Task, restart: :permanent

@@ -3,7 +3,7 @@ defmodule TcpClient do
   This is the TcpClient, a GenServer whose name is registered under TcpClient.
   If the TcpClient dies, it is not restarted, as there is no use to restart a connection that has been left.
 
-  It's main responsibiliy is to handle interactions with TCP clients, accept and executes commands from the client.
+  It's main responsibiliy is to handle interactions with TCP clients, accept and executes commands from clients.
   """
   use GenServer, restart: :temporary
 
@@ -31,11 +31,6 @@ defmodule TcpClient do
     broadcast_to_others(socket, "> #{username} has joined the chat!", state, prompt: false)
 
     {:ok, state}
-  end
-
-  def handle_info({:broadcast, socket, message}, state) do
-    broadcast(socket, message)
-    {:noreply, state}
   end
 
   def handle_info(
@@ -102,10 +97,7 @@ defmodule TcpClient do
   end
 
   defp show_stats(socket, state) do
-    number_of_connected_clients =
-      TcpClientRegistry.lookup()
-      |> length()
-
+    number_of_connected_clients = TcpClientRegistry.lookup() |> length()
     person = if number_of_connected_clients == 1, do: "person", else: "persons"
 
     message = """
