@@ -11,7 +11,7 @@ defmodule TcpServer.Application do
       # {TcpServer.Worker, arg}
 
       {DynamicSupervisor, strategy: :one_for_one, name: TcpServer.DynamicSupervisor},
-      {TcpClientPool, []},
+      TcpClientRegistry,
       {TcpServer, 5000}
     ]
 

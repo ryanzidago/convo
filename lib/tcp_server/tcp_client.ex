@@ -12,12 +12,12 @@ defmodule TcpClient do
   def start_link(socket) do
     Logger.info("Starting TcpClient ...")
 
-    TcpClientPool.add_client(socket)
-
     GenServer.start_link(__MODULE__, socket)
   end
 
   def init(socket) do
+    TcpClientRegistry.register(socket)
+
     username = set_username(socket)
 
     state = %{
@@ -33,6 +33,11 @@ defmodule TcpClient do
     {:ok, state}
   end
 
+  def handle_info({:broadcast, socket, message}, state) do
+    broadcast(socket, message)
+    {:noreply, state}
+  end
+
   def handle_info(
         {:tcp, socket, message},
         %{number_of_messages_receveived: number_of_messages_receveived} = state
@@ -42,8 +47,6 @@ defmodule TcpClient do
   end
 
   def handle_info({:tcp_closed, socket}, %{username: username} = state) do
-    TcpClientPool.delete_client(socket)
-
     broadcast_to_others(socket, "> #{username} has left the chat!", state, prompt: false)
 
     {:noreply, state}
@@ -100,7 +103,7 @@ defmodule TcpClient do
 
   defp show_stats(socket, state) do
     number_of_connected_clients =
-      TcpClientPool.get_all_clients()
+      TcpClientRegistry.lookup()
       |> length()
 
     person = if number_of_connected_clients == 1, do: "person", else: "persons"
@@ -148,7 +151,8 @@ defmodule TcpClient do
         false -> message
       end
 
-    TcpClientPool.get_all_clients()
+    TcpClientRegistry.lookup()
+    |> Stream.map(fn {_pid, port} -> port end)
     |> Stream.reject(&(&1 == current_client))
     |> Enum.each(&broadcast(&1, message))
 
