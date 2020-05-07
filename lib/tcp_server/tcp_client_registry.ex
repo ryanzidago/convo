@@ -21,7 +21,7 @@ defmodule TcpClientRegistry do
     Registry.register(__MODULE__, room, socket)
   end
 
-  def unregister(socket, room \\ "main-room") do
+  def unregister(room \\ "main-room") do
     Registry.unregister(__MODULE__, room)
   end
 
@@ -33,10 +33,18 @@ defmodule TcpClientRegistry do
     Registry.keys(TcpClientRegistry, pid)
   end
 
-  def dispatch do
-    Registry.dispatch(__MODULE__, "main-room", fn entries ->
-      Logger.debug("Registry entry: #{inspect(entries)}")
-      for {pid, socket} <- entries, do: send(pid, {:tcp, socket, "HELLO FROM REGISTRY\n"})
+  def broadcast_to_others(message, %{socket: current_client} = state, room \\ "main-room") do
+    Registry.dispatch(__MODULE__, room, fn entries ->
+      for {pid, socket} <- entries,
+          do: if(socket != current_client, do: send(pid, {:msg, socket, message <> "\n"}))
     end)
+
+    state
+  end
+
+  def broadcast_to_self(message, %{socket: socket} = state) do
+    :gen_tcp.send(socket, message)
+
+    state
   end
 end

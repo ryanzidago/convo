@@ -6,7 +6,7 @@ defmodule TcpClient do
   It's main responsibility is to handle interactions with TCP clients, accept and executes commands from clients.
   """
   use GenServer, restart: :temporary
-
+  import TcpClientRegistry
   require Logger
 
   @initial_state %{username: nil, socket: nil}
@@ -17,17 +17,17 @@ defmodule TcpClient do
   end
 
   def init(socket) do
-    TcpClientRegistry.register(socket)
+    register(socket)
     :gen_tcp.send(socket, "Please, provide your username: ")
     {:ok, %{@initial_state | socket: socket}}
   end
 
-  def handle_info({:msg, socket, message}, %{username: nil} = state) do
+  def handle_info({:msg, _socket, _message}, %{username: nil} = state) do
     {:noreply, state}
   end
 
-  def handle_info({:msg, socket, message}, state) do
-    :gen_tcp.send(socket, message <> "\n")
+  def handle_info({:msg, _socket, message}, state) do
+    broadcast_to_self(message, state)
     {:noreply, state}
   end
 
@@ -36,7 +36,7 @@ defmodule TcpClient do
   end
 
   def handle_info({:tcp, _socket, message}, state) do
-    Logger.warn("Receiving packet #{inspect(message)}")
+    Logger.info("Receiving packet #{inspect(message)}")
     state = message |> String.trim() |> process_message(state)
     {:noreply, state}
   end
@@ -46,21 +46,22 @@ defmodule TcpClient do
   end
 
   def handle_info({:tcp_closed, _socket}, %{username: username} = state) do
-    broadcast_to_others("> #{username} has left the chat!", state, prompt: false)
+    broadcast_to_others("> #{username} has left the chat!", state)
+    unregister()
     {:noreply, state}
   end
 
-  defp process_message(message, state) do
+  defp process_message(message, %{username: username} = state) do
     case message do
       "> display-commands" -> display_commands(state)
       "> change-username " <> new_username -> change_username(new_username, state)
       "> leave" -> leave(state)
       "" -> state
-      _ -> broadcast_to_others(message, state)
+      _ -> broadcast_to_others(prompt(username) <> message, state)
     end
   end
 
-  defp display_commands(%{socket: socket} = state) do
+  defp display_commands(state) do
     message = """
 
     Here is a list of all the commands that you can execute:
@@ -75,51 +76,30 @@ defmodule TcpClient do
       # leave the chat and returns to the command line.
     """
 
-    broadcast(socket, message)
-
-    state
+    broadcast_to_self(message, state)
   end
 
-  defp change_username(new_username, %{socket: socket, username: username} = state) do
-    broadcast(socket, "> Your username has been changed to #{new_username}!")
+  defp change_username(new_username, %{username: old_username} = state) do
+    broadcast_to_self(
+      "> Your username has been changed to #{new_username}!",
+      state
+    )
 
     broadcast_to_others(
-      "> #{username} has changed his/her username to #{new_username}!",
-      state,
-      prompt: false
+      "> #{old_username} changed his/her username to #{new_username}!",
+      state
     )
 
     %{state | username: new_username}
   end
 
-  defp leave(%{username: username, socket: socket} = state) do
-    broadcast(socket, "See you next time #{username}!")
+  defp leave(%{username: username} = state) do
+    broadcast_to_self("See you next time #{username}!", state)
+    broadcast_to_others("> #{username} has left the chat!", state)
+    unregister()
 
-    send(self(), {:tcp_closed, socket})
     Process.exit(self(), :kill)
     state
-  end
-
-  defp broadcast_to_others(
-         message,
-         %{username: username, socket: current_client} = state,
-         opts \\ [prompt: true]
-       ) do
-    message =
-      case Keyword.get(opts, :prompt) do
-        true -> prompt(username) <> message
-        false -> message
-      end
-
-    TcpClientRegistry.lookup()
-    |> Stream.reject(fn {_pid, socket} -> socket == current_client end)
-    |> Enum.each(fn {pid, socket} -> send(pid, {:msg, socket, message}) end)
-
-    state
-  end
-
-  def broadcast(client, message) do
-    :gen_tcp.send(client, message <> "\n")
   end
 
   defp prompt(username) do
