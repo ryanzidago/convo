@@ -31,7 +31,8 @@ defmodule Convo.Client do
     {:noreply, state}
   end
 
-  def handle_info({:tcp, _socket, message}, %{username: nil} = state) do
+  def handle_info({:tcp, socket, message}, %{username: nil} = state) do
+    :gen_tcp.send(socket, ~s(To display a list of all commands, type `> display-commands`\n))
     {:noreply, %{state | username: String.trim(message)}}
   end
 
