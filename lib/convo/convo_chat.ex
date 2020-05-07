@@ -119,8 +119,11 @@ defmodule Convo.Chat do
     > display-commands
       # display a list of all commands.
 
-    > change-username <new-username>
-      # allows you to change your username; type e.g.: "> change-username bertrand" to change your username to "betrand"
+    > change-username <new username>
+      # allows you to change your username; type e.g.: "> change-username bertrand" to change your username to "betrand".
+
+    > join-room <name of the room>
+      # join an existing room, or automatically create a new room if it did not exist.
 
     > leave
       # leave the chat and returns to the command line.
