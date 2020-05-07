@@ -1,17 +1,18 @@
-defmodule TcpClient do
+defmodule Convo.Client do
   @doc """
-  This is the TcpClient, a GenServer whose name is registered under TcpClient.
-  If the TcpClient dies, it is not restarted, as there is no use to restart a connection that has been left.
+  This is the ConvoClient, a GenServer whose name is registered under ConvoClient.
+  If the ConvoClient dies, it is not restarted, as there is no use to restart a connection that has been left.
 
   It's main responsibility is to handle interactions with TCP clients, accept and executes commands from clients.
   """
   use GenServer, restart: :temporary
   require Logger
+  alias Convo.Chat
 
   @initial_state %{username: nil, socket: nil, pid: nil, room: nil}
 
   def start_link(socket) do
-    Logger.info("Starting TcpClient ...")
+    Logger.info("Starting Convo.Client ...")
     GenServer.start_link(__MODULE__, socket)
   end
 

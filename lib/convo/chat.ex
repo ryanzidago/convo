@@ -1,4 +1,4 @@
-defmodule Chat do
+defmodule Convo.Chat do
   require Logger
 
   def child_spec(_opts) do
@@ -12,7 +12,7 @@ defmodule Chat do
   end
 
   def start_link do
-    Logger.debug("Starting Chat ...")
+    Logger.debug("Starting Convo.Chat ...")
     opts = [keys: :duplicate, name: __MODULE__, partitions: System.schedulers_online()]
     Registry.start_link(opts)
   end
