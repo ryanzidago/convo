@@ -22,8 +22,22 @@ defmodule TcpClient do
     {:ok, %{@initial_state | socket: socket}}
   end
 
+  def handle_info({:msg, socket, message}, %{username: nil} = state) do
+    {:noreply, state}
+  end
+
+  def handle_info({:msg, socket, message}, state) do
+    :gen_tcp.send(socket, message <> "\n")
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _socket, message}, %{username: nil} = state) do
+    {:noreply, %{state | username: String.trim(message)}}
+  end
+
   def handle_info({:tcp, _socket, message}, state) do
-    state = process_message(String.trim(message), state)
+    Logger.warn("Receiving packet #{inspect(message)}")
+    state = message |> String.trim() |> process_message(state)
     {:noreply, state}
   end
 
@@ -34,10 +48,6 @@ defmodule TcpClient do
   def handle_info({:tcp_closed, _socket}, %{username: username} = state) do
     broadcast_to_others("> #{username} has left the chat!", state, prompt: false)
     {:noreply, state}
-  end
-
-  defp process_message(username, %{username: nil} = state) do
-    %{state | username: username}
   end
 
   defp process_message(message, state) do
@@ -102,9 +112,8 @@ defmodule TcpClient do
       end
 
     TcpClientRegistry.lookup()
-    |> Stream.map(fn {_pid, socket} -> socket end)
-    |> Stream.reject(&(&1 == current_client))
-    |> Enum.each(&broadcast(&1, message))
+    |> Stream.reject(fn {_pid, socket} -> socket == current_client end)
+    |> Enum.each(fn {pid, socket} -> send(pid, {:msg, socket, message}) end)
 
     state
   end
