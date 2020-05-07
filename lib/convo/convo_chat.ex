@@ -13,7 +13,14 @@ defmodule Convo.Chat do
 
   def start_link do
     Logger.debug("Starting Convo.Chat ...")
-    opts = [keys: :duplicate, name: __MODULE__, partitions: System.schedulers_online()]
+
+    opts = [
+      keys: :duplicate,
+      name: __MODULE__,
+      partitions: System.schedulers_online(),
+      parallel: true
+    ]
+
     Registry.start_link(opts)
   end
 
@@ -31,6 +38,10 @@ defmodule Convo.Chat do
 
   def registered_in(pid) do
     Registry.keys(__MODULE__, pid)
+  end
+
+  def select_all do
+    Registry.select(__MODULE__, [{{:"$1", :"$2", :"$3"}, [], [{{:"$1", :"$2", :"$3"}}]}])
   end
 
   def process_message("", state) do
@@ -67,10 +78,18 @@ defmodule Convo.Chat do
 
     broadcast_to_self("You left room #{previous_room} and joined room #{new_room}!\n", state)
 
-    broadcast_to_others(
+    broadcast_info_others(
       "#{username} left room #{previous_room} and joined room #{new_room}\n",
       state
     )
+
+    state
+  end
+
+  def broadcast_info_others(message, %{socket: current_client} = _state) do
+    select_all()
+    |> Stream.reject(fn {_room, _pid, socket} -> socket == current_client end)
+    |> Enum.each(fn {_room, _pid, socket} -> broadcast(message, socket) end)
   end
 
   def broadcast_to_others(message, %{socket: current_client, room: room} = state) do
@@ -86,6 +105,10 @@ defmodule Convo.Chat do
     :gen_tcp.send(socket, message)
 
     state
+  end
+
+  def broadcast(message, socket) do
+    :gen_tcp.send(socket, message)
   end
 
   defp display_commands(state) do
