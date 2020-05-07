@@ -70,11 +70,11 @@ defmodule TcpClient do
     state
   end
 
-  defp change_username(new_username, %{socket: socket} = state) do
+  defp change_username(new_username, %{socket: socket, username: username} = state) do
     broadcast(socket, "> Your username has been changed to #{new_username}!")
 
     broadcast_to_others(
-      "> #{state.username} has changed his/her username to #{new_username}!",
+      "> #{username} has changed his/her username to #{new_username}!",
       state,
       prompt: false
     )
