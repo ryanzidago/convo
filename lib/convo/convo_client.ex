@@ -37,7 +37,7 @@ defmodule Convo.Client do
 
   def handle_info({:tcp, _socket, message}, state) do
     Logger.info("Receiving packet #{inspect(message)}")
-    state = message |> String.trim() |> process_message(state)
+    state = message |> String.trim() |> Chat.process_message(state)
     {:noreply, state}
   end
 
@@ -49,61 +49,5 @@ defmodule Convo.Client do
     Chat.broadcast_to_others("> #{username} has left the chat!", state)
     Chat.unregister()
     {:noreply, state}
-  end
-
-  defp process_message(message, %{username: username, room: previous_room} = state) do
-    case message do
-      "> display-commands" -> display_commands(state)
-      "> change-username " <> new_username -> change_username(new_username, state)
-      "> join-room " <> new_room -> Chat.join_room(%{state | room: new_room}, previous_room)
-      "> leave" -> leave(state)
-      "" -> state
-      _ -> Chat.broadcast_to_others(prompt(username) <> message, state)
-    end
-  end
-
-  defp display_commands(state) do
-    message = """
-
-    Here is a list of all the commands that you can execute:
-
-    > display-commands
-      # display a list of all commands.
-
-    > change-username <new-username>
-      # allows you to change your username; type e.g.: "> change-username bertrand" to change your username to "betrand"
-
-    > leave
-      # leave the chat and returns to the command line.
-    """
-
-    Chat.broadcast_to_self(message, state)
-  end
-
-  defp change_username(new_username, %{username: old_username} = state) do
-    Chat.broadcast_to_self(
-      "> Your username has been changed to #{new_username}!",
-      state
-    )
-
-    Chat.broadcast_to_others(
-      "> #{old_username} changed his/her username to #{new_username}!",
-      state
-    )
-
-    %{state | username: new_username}
-  end
-
-  defp leave(%{username: username} = state) do
-    Chat.broadcast_to_self("See you next time #{username}!", state)
-    Chat.broadcast_to_others("> #{username} has left the chat!", state)
-    Chat.unregister()
-
-    Process.exit(self(), :kill)
-    state
-  end
-
-  defp prompt(username) do
-    "\r#{username} : "
   end
 end
