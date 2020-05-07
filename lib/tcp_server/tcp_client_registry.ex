@@ -12,7 +12,7 @@ defmodule Chat do
   end
 
   def start_link do
-    Logger.debug("Starting TcpClientRegistry ...")
+    Logger.debug("Starting Chat ...")
     opts = [keys: :duplicate, name: __MODULE__, partitions: System.schedulers_online()]
     Registry.start_link(opts)
   end
@@ -30,10 +30,31 @@ defmodule Chat do
   end
 
   def registered_in(pid) do
-    Registry.keys(TcpClientRegistry, pid)
+    Registry.keys(__MODULE__, pid)
   end
 
-  def broadcast_to_others(message, %{socket: current_client} = state, room \\ "main-room") do
+  def join_room(
+        %{pid: pid, socket: socket, username: username, room: new_room} = state,
+        previous_room
+      )
+      when is_binary(new_room) do
+    Logger.debug("#{inspect(socket)} registered in #{inspect(registered_in(pid))}")
+    unregister(previous_room)
+    Logger.debug("#{inspect(socket)} registered in #{inspect(registered_in(pid))}")
+
+    broadcast_to_self("You left room #{previous_room} and joined room #{new_room}!\n", state)
+
+    broadcast_to_others(
+      "#{username} left room #{previous_room} and joined room #{new_room}\n",
+      state
+    )
+
+    Registry.register(__MODULE__, new_room, socket)
+    Logger.debug("#{inspect(socket)} registered in #{inspect(registered_in(pid))}")
+    state
+  end
+
+  def broadcast_to_others(message, %{socket: current_client, room: room} = state) do
     Registry.dispatch(__MODULE__, room, fn entries ->
       for {pid, socket} <- entries,
           do: if(socket != current_client, do: send(pid, {:msg, socket, message <> "\n"}))

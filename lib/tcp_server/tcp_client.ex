@@ -8,7 +8,7 @@ defmodule TcpClient do
   use GenServer, restart: :temporary
   require Logger
 
-  @initial_state %{username: nil, socket: nil}
+  @initial_state %{username: nil, socket: nil, pid: nil, room: nil}
 
   def start_link(socket) do
     Logger.info("Starting TcpClient ...")
@@ -18,7 +18,7 @@ defmodule TcpClient do
   def init(socket) do
     Chat.register(socket)
     :gen_tcp.send(socket, "Please, provide your username: ")
-    {:ok, %{@initial_state | socket: socket}}
+    {:ok, %{@initial_state | socket: socket, pid: self(), room: "main-room"}}
   end
 
   def handle_info({:msg, _socket, _message}, %{username: nil} = state) do
@@ -50,10 +50,11 @@ defmodule TcpClient do
     {:noreply, state}
   end
 
-  defp process_message(message, %{username: username} = state) do
+  defp process_message(message, %{username: username, room: previous_room} = state) do
     case message do
       "> display-commands" -> display_commands(state)
       "> change-username " <> new_username -> change_username(new_username, state)
+      "> join-room " <> new_room -> Chat.join_room(%{state | room: new_room}, previous_room)
       "> leave" -> leave(state)
       "" -> state
       _ -> Chat.broadcast_to_others(prompt(username) <> message, state)
