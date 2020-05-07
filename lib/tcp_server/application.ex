@@ -10,7 +10,7 @@ defmodule TcpServer.Application do
       # Starts a worker by calling: TcpServer.Worker.start_link(arg)
       # {TcpServer.Worker, arg}
       {DynamicSupervisor, strategy: :one_for_one, name: TcpServer.DynamicSupervisor},
-      TcpClientRegistry,
+      Chat,
       {TcpServer, 5000}
     ]
 

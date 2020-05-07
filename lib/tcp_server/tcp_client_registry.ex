@@ -1,4 +1,4 @@
-defmodule TcpClientRegistry do
+defmodule Chat do
   require Logger
 
   def child_spec(_opts) do

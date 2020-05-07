@@ -6,7 +6,6 @@ defmodule TcpClient do
   It's main responsibility is to handle interactions with TCP clients, accept and executes commands from clients.
   """
   use GenServer, restart: :temporary
-  import TcpClientRegistry
   require Logger
 
   @initial_state %{username: nil, socket: nil}
@@ -17,7 +16,7 @@ defmodule TcpClient do
   end
 
   def init(socket) do
-    register(socket)
+    Chat.register(socket)
     :gen_tcp.send(socket, "Please, provide your username: ")
     {:ok, %{@initial_state | socket: socket}}
   end
@@ -27,7 +26,7 @@ defmodule TcpClient do
   end
 
   def handle_info({:msg, _socket, message}, state) do
-    broadcast_to_self(message, state)
+    Chat.broadcast_to_self(message, state)
     {:noreply, state}
   end
 
@@ -46,8 +45,8 @@ defmodule TcpClient do
   end
 
   def handle_info({:tcp_closed, _socket}, %{username: username} = state) do
-    broadcast_to_others("> #{username} has left the chat!", state)
-    unregister()
+    Chat.broadcast_to_others("> #{username} has left the chat!", state)
+    Chat.unregister()
     {:noreply, state}
   end
 
@@ -57,7 +56,7 @@ defmodule TcpClient do
       "> change-username " <> new_username -> change_username(new_username, state)
       "> leave" -> leave(state)
       "" -> state
-      _ -> broadcast_to_others(prompt(username) <> message, state)
+      _ -> Chat.broadcast_to_others(prompt(username) <> message, state)
     end
   end
 
@@ -76,16 +75,16 @@ defmodule TcpClient do
       # leave the chat and returns to the command line.
     """
 
-    broadcast_to_self(message, state)
+    Chat.broadcast_to_self(message, state)
   end
 
   defp change_username(new_username, %{username: old_username} = state) do
-    broadcast_to_self(
+    Chat.broadcast_to_self(
       "> Your username has been changed to #{new_username}!",
       state
     )
 
-    broadcast_to_others(
+    Chat.broadcast_to_others(
       "> #{old_username} changed his/her username to #{new_username}!",
       state
     )
@@ -94,9 +93,9 @@ defmodule TcpClient do
   end
 
   defp leave(%{username: username} = state) do
-    broadcast_to_self("See you next time #{username}!", state)
-    broadcast_to_others("> #{username} has left the chat!", state)
-    unregister()
+    Chat.broadcast_to_self("See you next time #{username}!", state)
+    Chat.broadcast_to_others("> #{username} has left the chat!", state)
+    Chat.unregister()
 
     Process.exit(self(), :kill)
     state
