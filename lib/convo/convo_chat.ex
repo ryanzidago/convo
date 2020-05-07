@@ -88,7 +88,7 @@ defmodule Convo.Chat do
 
   def broadcast_info_others(message, %{socket: current_client} = _state) do
     select_all()
-    |> Stream.reject(fn {_room, _pid, socket} -> socket == current_client end)
+    |> Stream.filter(fn {_room, _pid, socket} -> socket != current_client end)
     |> Enum.each(fn {_room, _pid, socket} -> broadcast(message, socket) end)
   end
 
