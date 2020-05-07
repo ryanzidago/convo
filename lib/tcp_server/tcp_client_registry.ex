@@ -33,10 +33,10 @@ defmodule TcpClientRegistry do
     Registry.keys(TcpClientRegistry, pid)
   end
 
-  # def dispatch do
-  #   Registry.dispatch(__MODULE__, "main-room", fn entries ->
-  #     Logger.debug("Registry entry: #{inspect(entries)}")
-  #     for {_pid, socket} <- entries, do: :gen_tcp.send(socket, "Hello from the REGISTRY!")
-  #   end)
-  # end
+  def dispatch do
+    Registry.dispatch(__MODULE__, "main-room", fn entries ->
+      Logger.debug("Registry entry: #{inspect(entries)}")
+      for {pid, socket} <- entries, do: send(pid, {:tcp, socket, "HELLO FROM REGISTRY\n"})
+    end)
+  end
 end

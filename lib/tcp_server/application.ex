@@ -9,7 +9,6 @@ defmodule TcpServer.Application do
     children = [
       # Starts a worker by calling: TcpServer.Worker.start_link(arg)
       # {TcpServer.Worker, arg}
-
       {DynamicSupervisor, strategy: :one_for_one, name: TcpServer.DynamicSupervisor},
       TcpClientRegistry,
       {TcpServer, 5000}

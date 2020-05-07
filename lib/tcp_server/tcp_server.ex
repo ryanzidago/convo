@@ -23,7 +23,7 @@ defmodule TcpServer do
       :gen_tcp.listen(port, [
         :binary,
         packet: :line,
-        active: false,
+        active: true,
         reuseaddr: true
       ])
 
