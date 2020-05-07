@@ -6,7 +6,7 @@ defmodule Convo.Chat do
       id: __MODULE__,
       start: {__MODULE__, :start_link, []},
       type: :worker,
-      restart: :temporary,
+      restart: :permanent,
       shutdown: 500
     }
   end

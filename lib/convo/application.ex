@@ -15,7 +15,7 @@ defmodule Convo.Application do
     ]
 
     # starting a Supervisor process with the name Convo.Supervisor
-    opts = [strategy: :one_for_one, name: Convo.Supervisor]
+    opts = [strategy: :one_for_one, max_restarts: 1000, name: Convo.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end
