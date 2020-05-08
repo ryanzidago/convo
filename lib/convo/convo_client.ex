@@ -40,7 +40,14 @@ defmodule Convo.Client do
     {:noreply, state}
   end
 
+  def handle_info(:leave, state) do
+    Process.exit(self(), :shutdown)
+
+    {:noreply, state}
+  end
+
   def handle_info({:tcp_closed, _socket}, %{username: nil} = state) do
+    Process.exit(self(), :shutdown)
     {:noreply, state}
   end
 
