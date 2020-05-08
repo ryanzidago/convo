@@ -42,7 +42,6 @@ defmodule Convo.Client do
 
   def handle_info(:leave, state) do
     Process.exit(self(), :shutdown)
-
     {:noreply, state}
   end
 
