@@ -17,7 +17,7 @@ defmodule Convo.Server do
   end
 
   def accept(port) do
-    Process.register(self(), Convo)
+    Process.register(self(), Convo.Server)
 
     {:ok, listen_socket} =
       :gen_tcp.listen(port, [

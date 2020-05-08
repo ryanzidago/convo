@@ -1,4 +1,11 @@
 defmodule Convo.Chat do
+  @doc """
+  This is the Convo.Chat.
+
+  It's main responsibility is to handle interactions with TCP clients, accept and executes commands from clients.
+  It uses Elixir's Registry as a PubSub mechanism to dispatch message to the proper TCP client
+  registered in the correct rooms.
+  """
   require Logger
 
   def child_spec(_opts) do

@@ -1,9 +1,7 @@
 defmodule Convo.Client do
   @doc """
-  This is the ConvoClient, a GenServer whose name is registered under ConvoClient.
-  If the ConvoClient dies, it is not restarted, as there is no use to restart a connection that has been left.
-
-  It's main responsibility is to handle interactions with TCP clients, accept and executes commands from clients.
+  This is the Convo.Client, a GenServer whose name is registered under Convo.Client.
+  If the Convo.Client dies, it is not restarted, as there is no use to restart a connection that has been left.
   """
   use GenServer, restart: :temporary
   require Logger
@@ -32,7 +30,7 @@ defmodule Convo.Client do
   end
 
   def handle_info({:tcp, socket, message}, %{username: nil} = state) do
-    :gen_tcp.send(socket, ~s(To display a list of all commands, type `> display-commands`\n))
+    :gen_tcp.send(socket, "To display a list of all commands, type `> display-commands`\n")
     {:noreply, %{state | username: String.trim(message)}}
   end
 
