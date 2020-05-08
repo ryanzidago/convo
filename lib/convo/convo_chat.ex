@@ -85,7 +85,7 @@ defmodule Convo.Chat do
 
     broadcast_to_self("You left room #{previous_room} and joined room #{new_room}!\n", state)
 
-    broadcast_info_others(
+    broadcast_info_to_others(
       "#{username} left room #{previous_room} and joined room #{new_room}\n",
       state
     )
@@ -93,10 +93,10 @@ defmodule Convo.Chat do
     state
   end
 
-  def broadcast_info_others(message, %{socket: current_client} = _state) do
+  def broadcast_info_to_others(message, %{socket: current_client} = _state) do
     select_all()
     |> Stream.filter(fn {_room, _pid, socket} -> socket != current_client end)
-    |> Enum.each(fn {_room, _pid, socket} -> broadcast(message, socket) end)
+    |> Enum.each(fn {_room, _pid, socket} -> broadcast(message <> "\n", socket) end)
   end
 
   def broadcast_to_others(message, %{socket: current_client, room: room} = state) do
@@ -153,7 +153,7 @@ defmodule Convo.Chat do
 
   defp leave(%{pid: pid, username: username, socket: socket} = state) do
     broadcast_to_self("See you next time #{username}!", state)
-    broadcast_to_others("> #{username} has left the chat!", state)
+    broadcast_info_to_others("> #{username} has left the chat!", state)
 
     send(pid, {:tcp_closed, socket})
     state
