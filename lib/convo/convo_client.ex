@@ -40,11 +40,6 @@ defmodule Convo.Client do
     {:noreply, state}
   end
 
-  def handle_info(:leave, state) do
-    Process.exit(self(), :shutdown)
-    {:noreply, state}
-  end
-
   def handle_info({:tcp_closed, _socket}, %{username: nil} = state) do
     Process.exit(self(), :shutdown)
     {:noreply, state}
@@ -52,7 +47,7 @@ defmodule Convo.Client do
 
   def handle_info({:tcp_closed, _socket}, %{username: username} = state) do
     Chat.broadcast_to_others("> #{username} has left the chat!", state)
-    Chat.unregister()
+    Process.exit(self(), :shutdown)
     {:noreply, state}
   end
 end

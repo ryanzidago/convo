@@ -151,12 +151,12 @@ defmodule Convo.Chat do
     )
   end
 
-  defp leave(%{pid: pid, username: username} = state) do
+  defp leave(%{pid: pid, username: username, socket: socket} = state) do
     broadcast_to_self("See you next time #{username}!", state)
     broadcast_to_others("> #{username} has left the chat!", state)
     unregister()
 
-    send(pid, :leave)
+    send(pid, {:tcp_closed, socket})
     state
   end
 
