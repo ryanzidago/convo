@@ -30,11 +30,13 @@ defmodule Convo.Client do
   end
 
   def handle_info({:tcp, socket, message}, %{username: nil} = state) do
+    :inet.setopts(socket, active: :once)
     :gen_tcp.send(socket, "To display a list of all commands, type `> display-commands`\n")
     {:noreply, %{state | username: String.trim(message)}}
   end
 
-  def handle_info({:tcp, _socket, message}, state) do
+  def handle_info({:tcp, socket, message}, state) do
+    :inet.setopts(socket, active: :once)
     Logger.info("Receiving packet #{inspect(message)}")
     state = message |> String.trim() |> Chat.process_message(state)
     {:noreply, state}

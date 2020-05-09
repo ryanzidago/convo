@@ -23,7 +23,7 @@ defmodule Convo.Server do
       :gen_tcp.listen(port, [
         :binary,
         packet: :line,
-        active: true,
+        active: :once,
         reuseaddr: true
       ])
 

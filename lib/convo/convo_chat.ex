@@ -86,7 +86,7 @@ defmodule Convo.Chat do
     broadcast_to_self("You left room #{previous_room} and joined room #{new_room}!\n", state)
 
     broadcast_info_to_others(
-      "#{username} left room #{previous_room} and joined room #{new_room}\n",
+      "#{username} left room #{previous_room} and joined room #{new_room}",
       state
     )
 
