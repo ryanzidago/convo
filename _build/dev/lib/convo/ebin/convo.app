@@ -1,0 +1,9 @@
+{application,convo,
+             [{applications,[kernel,stdlib,elixir,logger]},
+              {description,"convo"},
+              {modules,['Elixir.Convo.Application','Elixir.Convo.CLI',
+                        'Elixir.Convo.Chat','Elixir.Convo.Client',
+                        'Elixir.Convo.Server']},
+              {registered,[]},
+              {vsn,"0.1.0"},
+              {mod,{'Elixir.Convo.Application',[]}}]}.
