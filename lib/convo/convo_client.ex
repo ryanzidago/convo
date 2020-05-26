@@ -1,6 +1,6 @@
 defmodule Convo.Client do
   @doc """
-  This is the Convo.Client, a GenServer whose name is registered under Convo.Client.
+  This is the Convo.Client, a GenServer representing a client connection to the TCP server (Convo.Server).
   If the Convo.Client dies, it is not restarted, as there is no use to restart a connection that has been left.
   """
   use GenServer, restart: :temporary
