@@ -1,5 +1,7 @@
 # Convo
 
+BONJOUR MONDE !
+
 To run the server, clone the repository and execute the following command: `iex -S mix` (ensure that port 5000 is available).
 After that, you can connect to the TCP server on port 5000 with a TCP client like `telnet` or `netcat`:
 ```
