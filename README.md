@@ -11,7 +11,7 @@ nc localhost 5000
 ```
 ## Features
 
-- the server handles connections
+- the server handles simultaneous connections very fast.
 - users can executes commands, and display documentation
 - users can change their username
 - users can create rooms
